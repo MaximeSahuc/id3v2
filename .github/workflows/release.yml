@@ -18,10 +18,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Built on 22.04 (glibc 2.35) to keep the runtime glibc floor low,
+          # so the binaries run on older distros too (Ubuntu 22.04+, Debian 12+).
           - arch: amd64
-            runner: ubuntu-latest
+            runner: ubuntu-22.04
           - arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-22.04-arm
     steps:
       - uses: actions/checkout@v5
 

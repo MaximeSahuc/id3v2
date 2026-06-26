@@ -54,7 +54,7 @@ jobs:
         run: ./id3v2-linux-${{ matrix.arch }} --version
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: id3v2-linux-${{ matrix.arch }}
           path: |
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

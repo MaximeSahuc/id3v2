@@ -1,0 +1,82 @@
+name: Release
+
+# Push a version tag to cut a release, e.g.:
+#   git tag v0.1.12 && git push origin v0.1.12
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # needed to create the release and upload assets
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libid3-dev zlib1g-dev
+
+      - name: Derive version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build portable binary
+        run: |
+          make PREFIX=/usr VERSION="${{ steps.version.outputs.version }}" \
+            LIBS="-Wl,-Bstatic -lid3 -lz -Wl,-Bdynamic -static-libgcc -static-libstdc++"
+          strip id3v2
+
+      - name: Package artifact
+        run: |
+          cp id3v2 id3v2-linux-${{ matrix.arch }}
+          sha256sum id3v2-linux-${{ matrix.arch }} > id3v2-linux-${{ matrix.arch }}.sha256
+          echo "--- file ---"; file id3v2-linux-${{ matrix.arch }}
+          echo "--- ldd  ---"; ldd  id3v2-linux-${{ matrix.arch }} || true
+
+      - name: Smoke test
+        run: ./id3v2-linux-${{ matrix.arch }} --version
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: id3v2-linux-${{ matrix.arch }}
+          path: |
+            id3v2-linux-${{ matrix.arch }}
+            id3v2-linux-${{ matrix.arch }}.sha256
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes

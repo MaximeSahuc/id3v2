@@ -11,6 +11,36 @@ that space.
 
 See INSTALL for directions on building id3v2.
 
+Pre-built binaries
+------------------
+
+Each tagged release ships self-contained Linux binaries for x86_64 (amd64) and
+ARM64 (built by CI, statically linked against id3lib/zlib, so they only need
+glibc at runtime). Fetch the latest one for your architecture from a script:
+
+    # x86_64 / amd64
+    curl -L -o id3v2 \
+      https://github.com/MaximeSahuc/id3v2/releases/latest/download/id3v2-linux-amd64
+
+    # ARM64 / aarch64
+    curl -L -o id3v2 \
+      https://github.com/MaximeSahuc/id3v2/releases/latest/download/id3v2-linux-arm64
+
+    chmod +x id3v2
+
+Or detect the architecture automatically:
+
+    case "$(uname -m)" in
+      x86_64)  arch=amd64 ;;
+      aarch64) arch=arm64 ;;
+    esac
+    curl -L -o id3v2 \
+      "https://github.com/MaximeSahuc/id3v2/releases/latest/download/id3v2-linux-${arch}"
+    chmod +x id3v2
+
+A matching id3v2-linux-<arch>.sha256 is published alongside each binary to
+verify the download.
+
 As of version 0.1.10 this code is under the LGPL.  A lot of it is based off
 the examples in id3lib, but there is some code from me :).
 

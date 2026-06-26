@@ -4,10 +4,15 @@ VERSION=0.1.11
 
 PREFIX=	/opt/local
 CXXFLAGS+=	-I${PREFIX}/include/ -DVERSION="\"${VERSION}\"" #-DSORT_RUNTIME
-LDFLAGS+=	-L${PREFIX}/lib/ 
+LDFLAGS+=	-L${PREFIX}/lib/
+
+# Libraries to link against. Override (e.g. from CI) to produce a
+# self-contained binary, e.g.:
+#   make LIBS="-Wl,-Bstatic -lid3 -lz -Wl,-Bdynamic -static-libgcc -static-libstdc++"
+LIBS?=	-lid3 -lz
 
 id3v2:	convert.o list.o id3v2.o genre.o
-	${CXX} ${LDFLAGS} -pedantic -Wall -g -o $@ $^ -lid3 -lz
+	${CXX} ${LDFLAGS} -pedantic -Wall -g -o $@ $^ ${LIBS}
 
 create_map: create_map.o
 	${CXX} -Wall -g -o $@ $^
